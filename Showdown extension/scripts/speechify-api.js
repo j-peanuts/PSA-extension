@@ -1,6 +1,8 @@
+import config from './config.js';
+
 class SpeechifyManager {
   constructor() {
-    this.apiKey = 'i1qo1h5eYsC92URMP_Ji9DzdX9eUAzVEw0VNAgFDYCU=';
+    this.apiKey = config.speechifyApiKey;
     this.speechRate = 1.0;
   }
 
