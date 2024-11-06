@@ -1,7 +1,121 @@
+console.log('Battle state script loaded');
+
 class BattleState {
-  constructor() {
-    this.reset();
-    this.setupObservers();
+  constructor(speechify) {
+    this.speechify = speechify;
+    this.currentState = {
+      format: '',
+      weather: { type: null, turnsLeft: 0 },
+      terrain: { type: null, turnsLeft: 0 },
+      playerSide: {
+        currentPokemon: null,
+        pokemon: new Array(6).fill(null),
+        hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false },
+        revealedCount: 0
+      },
+      opponentSide: {
+        currentPokemon: null,
+        pokemon: new Array(6).fill(null),
+        hazards: { stealthRock: false, spikes: 0, toxicSpikes: 0, stickyWeb: false },
+        revealedCount: 0
+      }
+    };
+    this.moveData = null;
+    this.initializeBattleData();
+  }
+
+  waitForElement(selector) {
+    return new Promise(resolve => {
+      if (document.querySelector(selector)) {
+        resolve();
+        return;
+      }
+
+      const observer = new MutationObserver(() => {
+        if (document.querySelector(selector)) {
+          observer.disconnect();
+          resolve();
+        }
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    });
+  }
+
+  async initializeBattleData() {
+    await this.waitForElement('.battle');
+    await this.loadMoveData();
+  }
+
+  async loadMoveData() {
+    try {
+      // Load all data files
+      const [moves, pokemon, items, abilities] = await Promise.all([
+        fetch(chrome.runtime.getURL('data/moves.json')).then(r => r.json()),
+        fetch(chrome.runtime.getURL('data/pokemon.json')).then(r => r.json()),
+        fetch(chrome.runtime.getURL('data/items.json')).then(r => r.json()),
+        fetch(chrome.runtime.getURL('data/abilities.json')).then(r => r.json())
+      ]);
+
+      // Store data in the battle state
+      this.moveData = moves;
+      this.pokemonData = pokemon;
+      this.itemData = items;
+      this.abilityData = abilities;
+
+      // Make data globally available for compatibility
+      window.BattleMovedex = moves;
+      window.BattlePokedex = pokemon;
+      window.BattleItems = items;
+      window.BattleAbilities = abilities;
+
+      console.log('Loaded battle data:', {
+        moves: Object.keys(moves).length,
+        pokemon: Object.keys(pokemon).length,
+        items: Object.keys(items).length,
+        abilities: Object.keys(abilities).length
+      });
+
+      return true;
+    } catch (error) {
+      console.error('Error loading battle data:', error);
+      return false;
+    }
+  }
+
+  getMoveData(moveName) {
+    if (!this.moveData) {
+      console.error('Move data not yet loaded');
+      return {};
+    }
+
+    const moveId = this.toID(moveName);
+    const moveData = this.moveData[moveId];
+    
+    if (!moveData) {
+      console.log(`Move data not found for: ${moveName} (${moveId})`);
+      return {};
+    }
+    
+    return {
+      name: moveData.name,
+      basePower: moveData.basePower,
+      accuracy: moveData.accuracy === true ? 100 : moveData.accuracy,
+      category: moveData.category,
+      type: moveData.type,
+      description: moveData.shortDesc || moveData.desc,
+      pp: moveData.pp,
+      flags: moveData.flags || {},
+      secondary: moveData.secondary,
+      target: moveData.target
+    };
+  }
+
+  toID(text) {
+    return text.toLowerCase().replace(/[^a-z0-9]+/g, '');
   }
 
   reset() {
@@ -103,9 +217,9 @@ class BattleState {
     return this.currentState.opponentSide.currentPokemon;
   }
 
-  getPokemonBySlot(slot, isPlayer = true) {
-    const side = isPlayer ? this.currentState.playerSide : this.currentState.opponentSide;
-    return side.pokemon[slot];
+  getPokemonBySlot(slot) {
+    // Return Pokemon data for the given slot (0-5)
+    return this.currentState.playerSide.pokemon[slot] || null;
   }
 
   getFieldConditions() {
@@ -206,4 +320,50 @@ class BattleState {
       }
     }
   }
+
+  handleMove(message) {
+    if (message && typeof message === 'string') {
+      const moveMatch = message.match(/(.*) used (.*)!/);
+      if (moveMatch) {
+        const [_, pokemon, move] = moveMatch;
+      }
+    }
+  }
+
+  handleSwitch(message) {
+    const isOpponent = message.includes('The opposing');
+    const pokemonMatch = message.match(/sent out (.*?)!/);
+    
+    if (pokemonMatch) {
+      const pokemonName = pokemonMatch[1];
+      const side = isOpponent ? this.currentState.opponentSide : this.currentState.playerSide;
+      
+      // Find first empty slot or update existing Pokemon
+      let slot = side.pokemon.findIndex(p => !p || p.species === pokemonName);
+      if (slot === -1) slot = side.pokemon.findIndex(p => !p);
+      
+      // Create or update Pokemon data
+      side.pokemon[slot] = {
+        species: pokemonName,
+        currentHP: 100,
+        types: [], // Will be updated when revealed
+        ability: null,
+        item: null,
+        moves: [],
+        status: null,
+        teraType: null,
+        stats: { spe: 0 },
+        statChanges: {}
+      };
+      
+      // Update current Pokemon reference
+      side.currentPokemon = side.pokemon[slot];
+      
+      // Update revealed count for opponent
+      if (isOpponent && !side.pokemon.includes(null)) {
+        side.revealedCount++;
+      }
+    }
+  }
 } 
+window.BattleState = BattleState; 

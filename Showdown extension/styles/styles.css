@@ -56,4 +56,52 @@ button[aria-pressed="true"] {
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   border: 0;
-} 
+}
+
+select#voiceSelect {
+  width: 100%;
+  margin: 10px 0;
+  padding: 5px;
+}
+
+#testVoice {
+  margin-top: 10px;
+  padding: 5px 10px;
+}
+
+.setting-group label {
+  display: block;
+  margin: 10px 0;
+}
+
+/* Add to existing styles */
+#saveSettings {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#saveSettings:hover {
+    background-color: #45a049;
+}
+
+.highlight-width {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.highlight-width input[type="range"] {
+  width: 100px;
+}
+
+.highlight-width span {
+  min-width: 40px;
+}

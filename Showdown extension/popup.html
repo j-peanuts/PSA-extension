@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Pokemon Showdown Speech Settings</title>
+  <title>Pokemon Showdown Announcer</title>
+  <script src="scripts/config.js"></script>
+  <script src="scripts/speechify-api.js"></script>
+  <script src="scripts/popup.js"></script>
   <link rel="stylesheet" href="styles/styles.css">
 </head>
 <body>
@@ -12,6 +15,14 @@
       <input type="range" id="speechRate" min="0.5" max="3" step="0.1" value="1">
       <span id="speechRateValue">1x</span>
     </label>
+    
+    <label>
+      Voice:
+      <select id="voiceSelect">
+        <option value="">Loading voices...</option>
+      </select>
+    </label>
+    <button id="testVoice">Test Voice</button>
   </div>
 
   <div class="setting-group">
@@ -37,8 +48,8 @@
       <input type="text" id="teraKey" value="t">
     </div>
     <div class="key-binding">
-      <span>Cancel Action (esc):</span>
-      <input type="text" id="cancelKey" value="Escape">
+      <span>Cancel Action (backspace):</span>
+      <input type="text" id="cancelKey" value="Backspace">
     </div>
     <h4>Move Selection (1-4)</h4>
     <div class="key-binding">
@@ -92,6 +103,13 @@
         <input type="color" id="highlightColor" value="#ff0000">
       </label>
     </div>
+    <div class="highlight-width">
+      <label>
+        Highlight Width:
+        <input type="range" id="highlightWidth" min="1" max="20" step="1" value="2">
+        <span id="highlightWidthValue">2px</span>
+      </label>
+    </div>
     <label>
       <input type="checkbox" id="showTeraType" checked>
       Show Tera Type in Pokemon Info
@@ -99,7 +117,6 @@
   </div>
 
   <button id="resetSettings">Reset to Defaults</button>
-
-  <script src="scripts/popup.js"></script>
+  <button id="saveSettings">Save Settings</button>
 </body>
 </html>

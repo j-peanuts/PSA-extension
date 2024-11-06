@@ -1,42 +1,54 @@
 {
-  "manifest_version": 3,
-  "name": "PSA Showdown Extension",
-  "version": "1.0",
-  "description": "A Pokemon Showdown extension for PSA analysis",
-  "permissions": [
-    "activeTab",
-    "storage",
-    "tts"
-  ],
-  "host_permissions": [
-    "https://play.pokemonshowdown.com/*",
-    "https://api.speechify.com/*"
-  ],
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
+    "manifest_version": 3,
+    "name": "Pokemon Showdown Accessibility Helper",
+    "version": "1.0",
+    "description": "Adds accessibility features to Pokemon Showdown using text-to-speech",
+    "permissions": [
+      "storage",
+      "activeTab"
+    ],
+    "host_permissions": [
+      "https://*.pokemonshowdown.com/*",
+      "https://api.sws.speechify.com/"
+    ],
+    "content_scripts": [
+      {
+        "matches": [
+          "*://*.pokemonshowdown.com/*",
+          "*://play.pokemonshowdown.com/*"
+        ],
+        "js": [
+          "scripts/config.js",
+          "scripts/speechify-api.js",
+          "scripts/ui-handler.js",
+          "scripts/battle-state.js",
+          "scripts/key-handler.js",
+          "scripts/content.js"
+        ],
+        "css": ["styles/styles.css"],
+        "run_at": "document_idle"
+      }
+    ],
+    "icons": {
       "16": "icons/icon16.png",
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
-    }
-  },
-  "content_scripts": [
-    {
-      "matches": ["https://play.pokemonshowdown.com/*"],
-      "js": [
-        "scripts/speechify-api.js",
-        "scripts/battle-state.js",
-        "scripts/key-handler.js",
-        "scripts/ui-handler.js",
-        "scripts/content.js"
+    },
+    "action": {
+      "default_popup": "popup.html"
+    },
+    "background": {
+      "service_worker": "scripts/background.js"
+    },
+    "web_accessible_resources": [{
+      "resources": [
+        "data/moves.json",
+        "data/abilities.json",
+        "data/items.json",
+        "data/pokemon.json"
       ],
-      "css": ["styles/styles.css"]
-    }
-  ],
-  "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+      "matches": ["https://play.pokemonshowdown.com/*"]
+    }]
   }
-}
-
+  
+  
