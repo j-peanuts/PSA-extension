@@ -250,30 +250,6 @@ class UIHandler {
         };
     }
 
-    getMoveDescription(moveName) {
-        const moveId = this.toID(moveName);
-        const moveData = window.BattleMovedex?.[moveId] || window.battleMovedex?.[moveId];
-        
-        if (!moveData) {
-            console.log(`Move data not found for: ${moveName} (${moveId})`);
-            return null;
-        }
-
-        const accuracyText = moveData.accuracy === true ? '100' : moveData.accuracy;
-        const categoryText = moveData.category === 'Status' ? 'Status' : `${moveData.category} - ${moveData.basePower} BP`;
-
-        return {
-            description: moveData.shortDesc || moveData.desc,
-            basePower: moveData.basePower,
-            accuracy: accuracyText,
-            category: moveData.category,
-            type: moveData.type,
-            pp: moveData.pp,
-            flags: moveData.flags || {},
-            formattedText: `${moveData.name}: a ${categoryText} move that is a ${moveData.type} type move with ${accuracyText}% accuracy. ${moveData.shortDesc || moveData.desc}`
-        };
-    }
-
     toID(text) {
         if (text?.toLowerCase) {
             return text.toLowerCase().replace(/[^a-z0-9]+/g, '');
@@ -448,9 +424,51 @@ class UIHandler {
         const cancelButton = document.querySelector('button[name="undoChoice"]');
         if (cancelButton) {
             cancelButton.click();
+            if (window.keyManager?.speechify) {
+                window.keyManager.speechify.speak('cancelled');
+            }
             return true;
         }
         return false;
+    }
+
+    getPokemonDetails(pokemonIndex) {
+        const switchButtons = document.querySelectorAll('button[name="chooseSwitch"]');
+        const switchButton = switchButtons[pokemonIndex - 1];
+        
+        if (!switchButton) {
+            console.log('No switch button found at index:', pokemonIndex);
+            return null;
+        }
+
+        const pokemonName = switchButton.textContent.trim();
+        
+        // Get Pokemon data from battle state if available
+        const pokemon = window.keyManager?.battleState.getPokemonBySlot(pokemonIndex - 1);
+        
+        if (!pokemon) {
+            return {
+                name: pokemonName,
+                formattedText: pokemonName
+            };
+        }
+
+        // Format the text in a consistent way
+        const formattedText = `${pokemon.species}: ${pokemon.types.join(' ')} type with ${pokemon.currentHP}% HP remaining. ` +
+            `Base stats: HP ${pokemon.stats.hp}, Attack ${pokemon.stats.atk}, Defense ${pokemon.stats.def}, ` +
+            `Special Attack ${pokemon.stats.spa}, Special Defense ${pokemon.stats.spd}, Speed ${pokemon.stats.spe}. ` +
+            `Ability: ${pokemon.ability}. ` +
+            (pokemon.item ? `Holding ${pokemon.item}. ` : '') +
+            `Moves: ${pokemon.moves.map(m => m.name).join(', ')}. ` +
+            (pokemon.status ? this.getStatusText(pokemon.status) : '') +
+            (pokemon.teraType ? `Tera type: ${pokemon.teraType}. ` : '') +
+            (pokemon.statChanges ? this.getStatChangesText(pokemon.statChanges) : '');
+
+        return {
+            name: pokemonName,
+            pokemon: pokemon,
+            formattedText: formattedText
+        };
     }
 }
 

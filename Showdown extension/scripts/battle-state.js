@@ -335,34 +335,39 @@ class BattleState {
     const pokemonMatch = message.match(/sent out (.*?)!/);
     
     if (pokemonMatch) {
-      const pokemonName = pokemonMatch[1];
-      const side = isOpponent ? this.currentState.opponentSide : this.currentState.playerSide;
-      
-      // Find first empty slot or update existing Pokemon
-      let slot = side.pokemon.findIndex(p => !p || p.species === pokemonName);
-      if (slot === -1) slot = side.pokemon.findIndex(p => !p);
-      
-      // Create or update Pokemon data
-      side.pokemon[slot] = {
-        species: pokemonName,
-        currentHP: 100,
-        types: [], // Will be updated when revealed
-        ability: null,
-        item: null,
-        moves: [],
-        status: null,
-        teraType: null,
-        stats: { spe: 0 },
-        statChanges: {}
-      };
-      
-      // Update current Pokemon reference
-      side.currentPokemon = side.pokemon[slot];
-      
-      // Update revealed count for opponent
-      if (isOpponent && !side.pokemon.includes(null)) {
-        side.revealedCount++;
-      }
+        const pokemonName = pokemonMatch[1];
+        const side = isOpponent ? this.currentState.opponentSide : this.currentState.playerSide;
+        
+        // Find first empty slot or update existing Pokemon
+        let slot = side.pokemon.findIndex(p => !p || p.species === pokemonName);
+        if (slot === -1) slot = side.pokemon.findIndex(p => !p);
+        
+        // Get base Pokemon data from loaded Pokemon data
+        const baseData = this.pokemonData[this.toID(pokemonName)];
+        
+        // Create or update Pokemon data
+        side.pokemon[slot] = {
+            species: pokemonName,
+            currentHP: 100,
+            types: baseData ? baseData.types : [],
+            ability: baseData ? baseData.abilities[0] : null, // Default to first ability
+            item: null,
+            moves: [],
+            status: null,
+            teraType: null,
+            stats: baseData ? baseData.baseStats : { hp: 0, atk: 0, def: 0, spa: 0, spd: 0, spe: 0 },
+            statChanges: {}
+        };
+        
+        // Update current Pokemon reference
+        side.currentPokemon = side.pokemon[slot];
+        
+        // Update revealed count for opponent
+        if (isOpponent && !side.pokemon.includes(null)) {
+            side.revealedCount++;
+        }
+
+        console.log(`Pokemon data loaded for ${pokemonName}:`, side.pokemon[slot]);
     }
   }
 } 

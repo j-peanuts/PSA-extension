@@ -252,44 +252,40 @@ class KeyBindingManager {
 
   handleMoveKey(moveIndex, withDetails = false) {
     console.log('Handling move key:', moveIndex, 'with details:', withDetails);
-    // Clear any existing highlights first
-    this.uiHandler.clearHighlights();
     
-    // Get move details from UI Handler
-    const moveDetails = this.uiHandler.getMoveDetails(moveIndex);
-    if (!moveDetails) {
-        console.log('No move details found');
-        return;
-    }
-
-    if (withDetails) {
-        // Format detailed move description
-        let text = `${moveDetails.name}: a ${moveDetails.description.category}, ${moveDetails.description.type} type move`;
-        if (moveDetails.description.basePower) {
-            text += ` with ${moveDetails.description.basePower} base power`;
+    // Get the move buttons
+    const moveButtons = document.querySelectorAll('.movemenu button');
+    const button = moveButtons[moveIndex - 1];
+    
+    // Always try to highlight the move button
+    this.uiHandler.highlightMove(moveIndex);
+    
+    if (button) {
+        // Get move details from UI Handler
+        const moveDetails = this.uiHandler.getMoveDetails(moveIndex);
+        if (!moveDetails) {
+            console.log('No move details found');
+            return;
         }
-        text += ` and ${moveDetails.description.accuracy === true ? '100' : moveDetails.description.accuracy}% accuracy.`;
-        text += ` ${moveDetails.description.description}`;
         
-        console.log('Detailed Move Text:', text);
-        this.speechify.speak(text);
-    } else {
-        // Just speak the move name and highlight
-        console.log('Basic Move Text:', moveDetails.name);
-        this.speechify.speak(moveDetails.name);
-        console.log('Calling highlightMove with index:', moveIndex);
-        this.uiHandler.highlightMove(moveIndex);
-
         // Handle double-press to select
         if (this.lastHighlightedType === 'move' && this.lastHighlightedIndex === moveIndex) {
             this.uiHandler.clickHighlightedElement();
             this.clearHighlights();
+            this.speechify.speak(`${moveDetails.name} selected`);
         } else {
+            // First press - speak name or full details based on shift key
+            if (withDetails) {
+                this.speechify.speak(moveDetails.formattedText);
+            } else {
+                this.speechify.speak(moveDetails.name);
+            }
             this.lastHighlightedType = 'move';
             this.lastHighlightedIndex = moveIndex;
         }
     }
-}
+  }
+
   handlePokemonKey(pokemonIndex, withDetails) {
     // Get the switch buttons
     const switchButtons = document.querySelectorAll('button[name="chooseSwitch"]');
